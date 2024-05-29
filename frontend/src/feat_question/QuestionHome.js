@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
-import "./css/QuestionList.css";
+import "./css/QuestionHome.css";
 import Select from 'react-select';
-import SearchIcon from '@mui/icons-material/Search';
-import { Divider, List, TextField } from "@mui/material";
-import InputAdornment from '@mui/material/InputAdornment';
+import { Divider, List } from "@mui/material";
 import AddQuestion from "./AddQuestion";
 import { call } from "../api/ApiService";
-import Question from "./Question";
+import QuestionList from "./QuestionList";
+import SearchQuestion from "./SearchQuestion";
+import Header from "../Header";
 
 const options = [
   { value: '오래된순', label: '오래된순' },
@@ -21,19 +21,17 @@ const customStyles = {
     paddingLeft: 10,
     borderRadius: '2px',
     textAlign: 'center',
-    fontSize: '1em',
-    fontWeight: 'bold',
+    fontSize: '12px',
   }),
   control: (provided) => ({ // 보이는 부분 (default=최신순)
     ...provided,
     borderRadius: '10px',
     textAlign: 'center',
-    fontWeight: 'bold',
-    fontSize: '12px',
+    fontSize: '13px',
   }),
 };
 
-const QuestionList = () => {
+const QuestionHome = () => {
   const [items, setItems] = useState([]);
   const [sortOrder, setSortOrder] = useState(options[1]); // 기본값을 최신순으로 설정
 
@@ -42,12 +40,12 @@ const QuestionList = () => {
   }; //오래된순 <-> 최신순 변경
 
   useEffect(() => { 
-    // 백엔드와 프론트엔드 연결
-    call("/api/question","GET",null)
+    const childId = "temporary-childId";
+    call(`/api/question?childId=${childId}`,"GET",null)
     .then((response) => {
       if (response) {
-        setItems(response.data);
-        console.log(response.data);
+        setItems(response);
+        console.log(response);
       }
     })
     .catch((error) => {
@@ -57,44 +55,78 @@ const QuestionList = () => {
 
   //추가 
   const postQuestion = (item) => {
-    call("/api/question", "POST", item)
+    const childId = "temporary-childId";
+    call(`/api/question?childId=${childId}`, "POST", item)
     .then((response) => {
-      setItems(response.data)
-      console.log(response.data);
-    })
+      if(response) {
+        setItems([...items, response])
+      }
+    }) 
     .catch((error) => {
       console.error(error);
     });
   };
 
-  //리스트 불러오기 (최신, 오래된 순)
-  let questionList = items.length > 0 && (
+  //리스트 불러오기 (최신 순)
+  let questionNewList = items.length > 0 && (
       <List>
         {items.map((item, index) => (
           <React.Fragment key={item.questionId}>
-          <Question item={item}
+          <QuestionList item={item}
           />
           {index < items.length - 1 && <Divider />}
           </React.Fragment> // 구분선 추가
         ))}
       </List>
   );
+
+  //리스트 불러오기 (오래된 순)
+  let questionOldList = items.length > 0 && (
+      <List>
+        {items.reverse().map((item, index) => (
+          <React.Fragment key={item.questionId}>
+          <QuestionList item={item}
+          />
+          {index < items.length - 1 && <Divider />}
+          </React.Fragment> // 구분선 추가
+        ))}
+      </List>
+  );
+
+  const questionList = sortOrder === options[1] ? questionNewList : questionOldList;
   
+  //검색
+  const searchQuestion = (item) => {
+    const childId = "temporary-childId";
+    call(`/api/question/search?childId=${childId}&output=${item.output}`, "GET", null)
+    .then((response) => {
+        if (response) {
+          console.log(item.output);
+          setItems(response);
+        } else {
+            console.log(item.output);
+            console.error("Empty response received");
+        }
+    })
+    .catch((error)=>{
+        console.error("Failed to retrieve items:", error);
+    });
+}
 
-  //검색 - 엔터 & 돋보기
-
-
-  
   return (
     <div>
+
+      <Header 
+       title={"일일문답"}
+       setting
+       profile
+      />
+
       <div className="todayInput">어떤 놀이가 제일 좋아?</div>
       
       <AddQuestion postQuestion={postQuestion}/> {/* 추가부분 */}
-      
-      <div className="line"></div> 
 
       <div className="search"> 
-      
         <Select
           value={sortOrder}
           onChange={handleSortChange}
@@ -103,33 +135,16 @@ const QuestionList = () => {
           className="selectBox"
         />
 
-        <TextField 
-          className="searchBox" 
-          type="text" 
-          placeholder="문답을 검색해보세요." 
-          variant="outlined"
-          style={{ 
-            width: '180px',
-          }}
-          size="small"
-          InputProps={{
-            style: { fontSize: 11, marginTop:'2px', paddingTop:'2px' }, // placeholder와 입력 텍스트의 크기 설정
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon className="searchIcon" />
-              </InputAdornment>
-            ),
-          }}
-          />
+        <SearchQuestion searchQuestion={searchQuestion}/> {/* 검색부분 */}
+
       </div>
       
-      <div>
-        이전 질문
-        f<h5>{questionList}</h5>e
+      <div className="questionList">
+          {questionList}  
       </div>
 
     </div>
   );
 }
 
-export default QuestionList;
+export default QuestionHome;

@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { InputAdornment, TextField } from "@mui/material";
-import KeyboardArrowRightOutlinedIcon from '@mui/icons-material/KeyboardArrowRightOutlined';
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import "./css/AddQuestion.css";
+import MAddQuestion from "./modal/MAddQuestion";
 
 const AddQuestion = (props) => {
     const date = new Date(); // 날짜 받아오기 
@@ -9,6 +11,15 @@ const AddQuestion = (props) => {
     const [text, setText] = useState(''); // 글자수
     const [question, setQuestion] = useState({output:""});
     const postQuestion = props.postQuestion;
+    const [isHovered, setIsHovered] = useState(false);
+
+    const handleMouseEnter = () => {
+      setIsHovered(true);
+    };
+  
+    const handleMouseLeave = () => {
+      setIsHovered(false);
+    };
     
     //글자수
     const handleChange = (e) => {
@@ -45,8 +56,17 @@ const AddQuestion = (props) => {
         multiline // TextField를 멀티라인으로 변경
         InputProps={{
           endAdornment: (
-            <InputAdornment position="start">
-              <KeyboardArrowRightOutlinedIcon onClick={onButtonClick} className="uploadIcon" />
+            <InputAdornment 
+              position="start"
+              className="inputAdornment"
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+            >
+              {isHovered ? ( // 마우스 올렸을 때 아이콘 아래로 
+                <KeyboardArrowDownIcon onClick={onButtonClick} className="uploadIcon" />
+              ) : (
+                <KeyboardArrowRightIcon className="uploadIcon" />
+              )}
             </InputAdornment>
           ), 
         }}
@@ -57,6 +77,7 @@ const AddQuestion = (props) => {
         <div>{text.length}/50</div>
     </div>
 
+      <MAddQuestion  />
     </div>
   );
 }
