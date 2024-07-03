@@ -1,0 +1,21 @@
+.addQ .todayOutput {
+    background-color: #fff;
+}
+
+.addQ .uploadIcon {
+    padding-top:3px;
+    color: black;
+    cursor: pointer; /* 손가락 모양 커서 */
+}
+
+
+.addQ .date {
+    display: flex;
+    justify-content: space-between;
+    color: #999999;
+    font-size: 13px;
+    margin-top: 11px;
+    
+    padding-bottom: 15px;
+    border-bottom: 1px solid #cecece;
+}

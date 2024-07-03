@@ -10,6 +10,7 @@ export function call(api, method, request) {
     headers.append("Authorization", "Bearer " + accessToken);
   }
 
+
   let options = {
     headers: headers,
     url: API_BASE_URL + api,
