@@ -3,12 +3,12 @@ import "./css/QuestionHome.css";
 import Select from 'react-select';
 import { Divider, List } from "@mui/material";
 import AddQuestion from "./AddQuestion";
+import { call } from "../api/ApiService";
 import QuestionList from "./QuestionList";
 import SearchQuestion from "./SearchQuestion";
 import Header from "../Header";
 import MSearchQuestion from "./modal/MSearchQuestion";
 import PageFirst from "../PageFirst";
-import { getQuestion, postQuestion, getQuestionByOutput } from "./api/api-question";
 
 const options = [
   { value: '오래된순', label: '오래된순' },
@@ -35,12 +35,11 @@ const customStyles = {
 
 const QuestionHome = () => {
   const [items, setItems] = useState([]);
+  const [input, setInput] = useState('오늘의 질문을 준비하는 중입니다.'); // 추가된 상태
   const [sortOrder, setSortOrder] = useState(options[1]); // 기본값을 최신순으로 설정
   const [modalOpen, setModalOpen] = useState(false);
   
-  const date = new Date(); // 날짜 받아오기
-  const [day] = useState(new Date().toLocaleDateString());
-  
+  const date = new Date(); // 날짜 받아오기  
 
   const handleSortChange = (selectedOption) => {
     setSortOrder(selectedOption);
@@ -50,56 +49,69 @@ const QuestionHome = () => {
     setModalOpen(false);
   };
 
-  useEffect(() => {
-    try {
-      getQuestion()
-        .then(response => {
-          if(response) {
-            setItems(response);
-          }
-        });
-    } catch(error) {
-      console.error('Error fetching items : ', error);
-    }
+  useEffect(() => { 
+    const childId = "2c94c9b6907791d0019077931c970001";
+    call(`/api/question?childId=${childId}`,"GET",null)
+    .then((response) => {
+      if (response) {
+        setItems(response);
+      }
+    })
+    .catch((error) => {
+      console.error("Error fetching items", error);
+    });
   },[]);
 
   //추가 
-  const addQuestion = (question) => {
-    try {
-      postQuestion(question)
-        .then(response => {
-          if(response) {
-            setItems([...items, response]);
-          }
-        });
-    } catch(error) {
-      console.error('Error fetching items : ', error);
-    }
+  const postQuestion = (item) => {
+    const childId = "2c94c9b6907791d0019077931c970001";
+    call(`/api/question?childId=${childId}`, "POST", item)
+    .then((response) => {
+      if(response) {
+        setItems([...items, response]);
+      }
+    }) 
   };
 
   //검색
   const searchQuestion = (item) => {
-    try {
-      getQuestionByOutput(item.output)
-        .then(response => {
-          if(response && response.length > 0) {
-            setItems(response);
-          } else {
-            setModalOpen(true);
-          }
-        });
-    } catch(error) {
-      console.error('Error fetching items : ', error);
-    }
+    const childId = "2c94c9b6907791d0019077931c970001";
+    call(`/api/question/search?childId=${childId}&output=${item.output}`, "GET", null)
+    .then((response) => {
+        if (response && response.length > 0) {
+          setItems(response);
+        } else {
+          setModalOpen(true);
+        }
+    })
   }
 
+  //질문
+  const inputQuestion = () => {
+    const childId = "402880a690ace9720190acec3b050002";
+    const dayOfYear = Math.floor((date - new Date(date.getFullYear(), 0, 0)) / 86400000);
+    const inputId = dayOfYear  % 11 + 1;
+    // const m = date.getMinutes();
+    // const inputId = m % 11 + 1;
+    call(`/api/question/input?childId=${childId}&inputId=${inputId}`, "GET", null)
+    .then((response) => {
+      if(response) {
+        setInput(response.input);
+      }
+    }) 
+  };
+
+  useEffect(() => {
+    inputQuestion();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   //리스트 불러오기 (최신 순)
   let questionNewList = items.length > 0 && (
       <List>
         {items.map((item, index) => (
           <React.Fragment key={item.questionId}>
-          <QuestionList item={item} day={day}
+          <QuestionList item={item} setInput={setInput}
           />
           {index < items.length - 1 && <Divider />}
           </React.Fragment> // 구분선 추가
@@ -112,7 +124,7 @@ const QuestionHome = () => {
       <List>
         {items.reverse().map((item, index) => (
           <React.Fragment key={item.questionId}>
-          <QuestionList item={item} day={day}
+          <QuestionList item={item} setInput={setInput}
           />
           {index < items.length - 1 && <Divider />}
           </React.Fragment> // 구분선 추가
@@ -128,12 +140,15 @@ const QuestionHome = () => {
 
     <Header title="일일문답" type="home" />
 
-      <div className="todayInput">어떤 놀이가 제일 좋아?</div>
+      <div className="todayInput">{input}</div>
 
-      <AddQuestion postQuestion={postQuestion} date={date}/>
+      <AddQuestion postQuestion={postQuestion} 
+       date={date} items={items}/>
 
       <div className="search"> 
 
+
+      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         <Select
           value={sortOrder}
           onChange={handleSortChange}
@@ -141,16 +156,15 @@ const QuestionHome = () => {
           styles={customStyles}
           className="selectBox"
         />
-
-        
         <SearchQuestion searchQuestion={searchQuestion}/> {/* 검색부분 */}
+      </div>
         <MSearchQuestion 
           isOpen={modalOpen} onClose={handleCloseModal} /> {/* 모달부분 */}
         
       </div>
       
       <div className="questionList">
-          {questionList}
+      {questionList}
       </div>
 
     </div>
