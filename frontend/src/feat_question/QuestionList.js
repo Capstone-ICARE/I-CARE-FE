@@ -1,41 +1,43 @@
 import React, { useState } from "react";
 import { ListItem, ListItemText, FormControl } from "@mui/material";
-import ArrowDropDownOutlinedIcon from '@mui/icons-material/ArrowDropDownOutlined';
+// import ArrowDropDownOutlinedIcon from '@mui/icons-material/ArrowDropDownOutlined';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import "./css/QuestionList.css";
 
 const QuestionList = (props) => {
-    const item = props.item;
-    const output = item.output;
-    const [isOpen, setIsOpen] = useState(false); 
+  const item = props.item;
+  const output = item.output;
+  const input = item.input;
+  const day = item.date;
+  const [isOpen, setIsOpen] = useState(false);
 
-    const handleToggleChange = () => {
-        setIsOpen(!isOpen); // 토글 함수
-    };
+  const handleToggleChange = () => {
+      setIsOpen(!isOpen); // 토글 함수
+  };
 
-    const day = props.day;
+  return (
+    <ListItem>
+      <ListItemText onClick={(e) => e.stopPropagation()} >
+        <div className="questList">
+          <FormControl fullWidth variant="standard" style={{ margin: 'auto' }}>
 
-    return (
-        <ListItem>
-            <ListItemText onClick={(e) => e.stopPropagation()} >
-                <FormControl fullWidth variant="standard" style={{ margin: 'auto' }}>
+            <div style={{ flexGrow: 1, height: '48px', display: 'flex', alignItems: 'center' }}>
+              <span className="inputList">{input}</span> {/* 질문 */}
+              <button style={{ cursor: 'pointer', marginLeft: 'auto' }} onClick={handleToggleChange} className="dropdownIcon">
+              {isOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+              </button>
+            </div>
 
-                <div style={{ flexGrow: 1, height: '48px', display: 'flex', alignItems: 'center' }}>
-                <span>z어떤 놀이가 제일 좋아?</span>
-                <span style={{ fontSize:'11px', color:"#aaa", marginLeft: 'auto' }}>{day}</span>
-                <ArrowDropDownOutlinedIcon style={{ cursor: 'pointer' }} onClick={handleToggleChange}/>
-                </div>
+            <span style={{ fontSize:'11px', color:"#aaa", marginTop:'-8px', marginBottom: '8px' }}>{day}</span>
 
-                {isOpen && (
-                    <div// style={{  display: 'flex', justifyContent: 'space-between'  }}>
-                    >
-                        <span>{output}</span>
-                    </div>
-                
-                )
-                }
-                </FormControl>
-            </ListItemText>
-        </ListItem>
-    );
+            {isOpen && (<span className="outputList">{output}</span>)}
+
+          </FormControl>
+        </div>
+      </ListItemText>
+    </ListItem>
+  );
 };
 
 export default QuestionList;

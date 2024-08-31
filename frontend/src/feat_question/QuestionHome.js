@@ -1,46 +1,26 @@
-import React, { useEffect, useState } from "react";
-import "./css/QuestionHome.css";
+import React, { useEffect, useRef, useState } from "react";
 import Select from 'react-select';
 import { Divider, List } from "@mui/material";
+import "./css/QuestionHome.css";
 import AddQuestion from "./AddQuestion";
 import QuestionList from "./QuestionList";
 import SearchQuestion from "./SearchQuestion";
-import Header from "../Header";
+import {options , customStyles} from "./SelectOption";
 import MSearchQuestion from "./modal/MSearchQuestion";
 import PageFirst from "../PageFirst";
-import { getQuestion, postQuestion, getQuestionByOutput } from "./api/api-question";
-
-const options = [
-  { value: '오래된순', label: '오래된순' },
-  { value: '최신순', label: '최신순' }
-];
-
-const customStyles = {
-  option: (provided, state) => ({ // 오래된순, 최신순
-    ...provided,
-    backgroundColor: state.isFocused ? '#6271f5' : null,
-    color: state.isFocused ? '#fff' : '#000',
-    paddingLeft: 10,
-    borderRadius: '2px',
-    textAlign: 'center',
-    fontSize: '12px',
-  }),
-  control: (provided) => ({ // 보이는 부분 (default=최신순)
-    ...provided,
-    borderRadius: '10px',
-    textAlign: 'center',
-    fontSize: '13px',
-  }),
-};
+import { showQuestion, postQuestion, searchQuestion, inputQuestion } from "./api/api-question";
 
 const QuestionHome = () => {
+  const header = {
+    title: "일일문답",
+    type: "home"
+  };
   const [items, setItems] = useState([]);
-  const [sortOrder, setSortOrder] = useState(options[1]); // 기본값을 최신순으로 설정
+  const [input, setInput] = useState('오늘의 질문을 준비하는 중입니다.'); // 추가된 상태
+  const [sortOrder, setSortOrder] = useState(options[0]); // 기본값을 최신순으로 설정
   const [modalOpen, setModalOpen] = useState(false);
   
-  const date = new Date(); // 날짜 받아오기
-  const [day] = useState(new Date().toLocaleDateString());
-  
+  const date = new Date(); // 날짜 받아오기  
 
   const handleSortChange = (selectedOption) => {
     setSortOrder(selectedOption);
@@ -48,58 +28,46 @@ const QuestionHome = () => {
 
   const handleCloseModal = () => {
     setModalOpen(false);
+    showQuestion(setItems);
+  };
+
+  // 추가
+  const handleAddQuestion = (item) => {
+    postQuestion(item, setItems, items);
+  }
+
+  // 검색
+  const handleSearchQuestion = (item) => {
+    searchQuestion(item, setItems, setModalOpen);
+  }
+
+  // 오늘의 질문 출력
+  const handleInputQuestion = () => {
+    inputQuestion(date, setInput);
+  }
+
+  const inputRef = useRef(null);
+
+  const handleClick = () => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
   };
 
   useEffect(() => {
-    try {
-      getQuestion()
-        .then(response => {
-          if(response) {
-            setItems(response);
-          }
-        });
-    } catch(error) {
-      console.error('Error fetching items : ', error);
-    }
-  },[]);
-
-  //추가 
-  const addQuestion = (question) => {
-    try {
-      postQuestion(question)
-        .then(response => {
-          if(response) {
-            setItems([...items, response]);
-          }
-        });
-    } catch(error) {
-      console.error('Error fetching items : ', error);
-    }
-  };
-
-  //검색
-  const searchQuestion = (item) => {
-    try {
-      getQuestionByOutput(item.output)
-        .then(response => {
-          if(response && response.length > 0) {
-            setItems(response);
-          } else {
-            setModalOpen(true);
-          }
-        });
-    } catch(error) {
-      console.error('Error fetching items : ', error);
-    }
-  }
+    showQuestion(setItems);
+    handleInputQuestion();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
 
+  const num = items.length;
   //리스트 불러오기 (최신 순)
   let questionNewList = items.length > 0 && (
       <List>
         {items.map((item, index) => (
           <React.Fragment key={item.questionId}>
-          <QuestionList item={item} day={day}
+          <QuestionList item={item} setInput={setInput}
           />
           {index < items.length - 1 && <Divider />}
           </React.Fragment> // 구분선 추가
@@ -112,7 +80,7 @@ const QuestionHome = () => {
       <List>
         {items.reverse().map((item, index) => (
           <React.Fragment key={item.questionId}>
-          <QuestionList item={item} day={day}
+          <QuestionList item={item} setInput={setInput}
           />
           {index < items.length - 1 && <Divider />}
           </React.Fragment> // 구분선 추가
@@ -120,39 +88,46 @@ const QuestionHome = () => {
       </List>
   );
 
-  const questionList = sortOrder === options[1] ? questionNewList : questionOldList;
+  const questionList = sortOrder === options[0] ? questionNewList : questionOldList;
 
+  const None = ({onClick}) => 
+    <div className="none" onClick={onClick}>
+      일일문답이 없습니다. <br />
+      일일문답을 작성해주세요.
+    </div>;
+    
   return (
-    <PageFirst>
-    <div>
+    <PageFirst header={header}>
+    <div className="questionHome">
+      <div className="todayInput">{input}</div>
 
-    <Header title="일일문답" type="home" />
-
-      <div className="todayInput">어떤 놀이가 제일 좋아?</div>
-
-      <AddQuestion postQuestion={postQuestion} date={date}/>
+      <AddQuestion postQuestion={handleAddQuestion} 
+      date={date} items={items}
+      ref={inputRef}/>
 
       <div className="search"> 
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <Select
+            value={sortOrder}
+            onChange={handleSortChange}
+            options={options}
+            styles={customStyles}
+            className="selectBox"
+          />
+          <SearchQuestion searchQuestion={handleSearchQuestion}/> {/* 검색부분 */}
+        </div>
 
-        <Select
-          value={sortOrder}
-          onChange={handleSortChange}
-          options={options}
-          styles={customStyles}
-          className="selectBox"
-        />
-
-        
-        <SearchQuestion searchQuestion={searchQuestion}/> {/* 검색부분 */}
         <MSearchQuestion 
           isOpen={modalOpen} onClose={handleCloseModal} /> {/* 모달부분 */}
-        
-      </div>
-      
-      <div className="questionList">
-          {questionList}
       </div>
 
+      {/* num : {num} */}
+
+      <div>
+      {num === 0 ? <None onClick={handleClick}/> : 
+      <div className="questionList">{questionList}</div>}
+      </div>
+    
     </div>
     </PageFirst>
   );

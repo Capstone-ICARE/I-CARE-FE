@@ -8,7 +8,7 @@ const Splash = () => {
     useEffect(() => {
       localStorage.clear();
       const timer = setTimeout(() => {
-        navigate('/login'); // 3초 후에 로그인 페이지로 이동
+        navigate('/onboarding1'); // 3초 후에 로그인 페이지로 이동 -> 온보딩1 페이지로 이동
       }, 3000);
   
       return () => {

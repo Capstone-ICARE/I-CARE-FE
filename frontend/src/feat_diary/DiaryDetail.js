@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import './css/DiaryDetail.css';
 import { useLocation } from "react-router-dom";
-import { getIconFont } from "./api/api-icon";
 import MEditDeleteDiary from "./modal/MEditDeleteDiary";
-import Header from "../Header";
 import PageFirst from "../PageFirst";
 
 const DiaryDetail = () => {
+  const header = {
+    title: "공감일기",
+    type: "back", 
+    routeBack: "/diary"
+  };
   const location = useLocation();
   const diary = location.state?.diary;
-  const [icon, setIcon] = useState();
   const date = new Date(diary.date);
   const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
   const weekday = weekdays[date.getDay()];
@@ -21,15 +23,6 @@ const DiaryDetail = () => {
     isOpen: false,
     type: ""
   });
-
-  useEffect(() => {
-    getIconFont(diary.iconId)
-      .then(iconFont => {
-        if(iconFont) {
-          setIcon(iconFont);
-        }
-      });
-  }, [diary]);
 
   const handleOpenPopup = (type) => {
     setIsPopupOpen({
@@ -46,14 +39,13 @@ const DiaryDetail = () => {
   }
 
   return (
-    <PageFirst>
+    <PageFirst header={header}>
     <div className="detail">
-      <Header title="공감일기" type="back" routeBack="/diary" />
       <div className="date">
         {stringDate} {weekday}요일
       </div>
       <div className="sub">
-        <div className="icon">{icon}</div>
+        <div className="icon">{diary.icon}</div>
         <div className="content">{diary.content}</div>
       </div>
       <div>

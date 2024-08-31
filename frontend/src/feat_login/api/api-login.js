@@ -5,7 +5,7 @@ export function signin(userDTO) {
         .then((response) => {
             if (response.token) {
                 localStorage.setItem("ACCESS_TOKEN", response.token);
-                window.location.href = "/addchild";
+                return response;
             }
         });
 }
@@ -25,6 +25,7 @@ export function addchild(userDTO) {
             if (response && response.data && response.data.length > 0 && response.data[0].childId) {
                 const childId = response.data[0].childId; // 응답 데이터에서 childId 추출
                 localStorage.setItem("childId", childId); // 로컬 스토리지에 childId 저장
+                //localStorage.setItem("childId", JSON.stringify(childId));
             }
             return response;
         })
@@ -34,7 +35,7 @@ export function addchild(userDTO) {
         });
 }
 
-/*
+
 export function selectchild() {
     return call("/api/child/list", "GET")
         .then((response) => {
@@ -46,4 +47,10 @@ export function selectchild() {
             throw error;
         });
 }
-*/
+
+export function getChild(childId) {
+    return call(`/api/child?childId=${childId}`, "GET", null)
+        .then((response) => {
+            return response;
+        });
+}
